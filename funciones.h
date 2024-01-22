@@ -4,100 +4,135 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-FILE *archivo;
-
-struct inventario_rep
-{
+void agregarRepuesto(FILE *archivo) {
     char nombre[50];
-    char cantidad[20];
-    char precio[20];
+    int cantidad;
+    float precio;
 
-}inventario;
+    // Ingreso de datos del nuevo repuesto
+    printf("Ingrese el nombre del repuesto (Para espacios utilize \"_\"): ");
+    scanf("%s", nombre);
+    printf("Ingrese la cantidad: ");
+    scanf("%d", &cantidad);
+    printf("Ingrese el precio: ");
+    scanf("%f", &precio);
 
-void crear()
-{
-    char direccion [] = "D:\\inventario_repuestos.txt";
-    archivo = fopen(direccion, "wt");
-    if (archivo == NULL)
-    {
-        printf("Error al tratar de crear el archivo");
-        return 1;
-    }
-    fprintf(archivo,"\t : Inventario : \n");
-    printf("\n\t: Ingrese los datos del repuesto : \n");
-    
-    fflush(stdin);
-    printf("\nNombre: "); scanf("%s",inventario.nombre);
-    printf("\nPrecio: "); scanf("%s",inventario.precio);
-    printf("\nCantidad: "); scanf("%s",inventario.cantidad);
+    // Escritura de los datos del nuevo repuesto en el archivo
+    fprintf(archivo, "%s %d %.2f\n", nombre, cantidad, precio);
 
-    fprintf(archivo,"\n\nNombre : ");
-    fwrite(inventario.nombre,1,strlen(inventario.nombre),archivo);
-
-    fprintf(archivo,"\nPrecio : ");
-    fwrite(inventario.precio,1,strlen(inventario.precio),archivo);
-        
-    fprintf(archivo,"\nCantidad : ");
-    fwrite(inventario.cantidad,1,strlen(inventario.cantidad),archivo);
-    
-    fclose(archivo);   
+    printf("Repuesto agregado con exito.\n");
 }
 
-void agregar()
-{
-    char direccion [] = "D:\\inventario_repuestos.txt";
-    char rpt = 's';
-    archivo = fopen(direccion, "at");   
-    if (archivo == NULL)
-    {
-        printf("Error al tratar de abrir el archivo");
-        return 1;
+void editarRepuesto(FILE *archivo) {
+    char nombre[50];
+    int nuevaCantidad;
+    float nuevoPrecio;
+
+    // Edición de datos del repuesto existente
+    printf("Ingrese el nombre del repuesto a editar (Para espacios utilize \"_\"): ");
+    scanf("%s", nombre);
+    printf("Ingrese la nueva cantidad: ");
+    scanf("%d", &nuevaCantidad);
+    printf("Ingrese el nuevo precio: ");
+    scanf("%f", &nuevoPrecio);
+
+    FILE *temporal;
+    char tempNombre[50];
+    int tempCantidad;
+    float tempPrecio;
+    int encontrado = 0;
+
+    // Creación de un archivo temporal para almacenar datos editados
+    temporal = fopen("temporal.txt", "w");
+    // Volver al principio del archivo principal
+    rewind(archivo);
+
+    // Copiar los datos al archivo temporal, realizando la edición si se encuentra el repuesto
+    while (fscanf(archivo, "%s %d %f", tempNombre, &tempCantidad, &tempPrecio) == 3) {
+        if (strcmp(tempNombre, nombre) == 0) {
+            fprintf(temporal, "%s %d %.2f\n", tempNombre, nuevaCantidad, nuevoPrecio);
+            printf("Repuesto editado con exito.\n");
+            encontrado = 1;
+        } else {
+            fprintf(temporal, "%s %d %.2f\n", tempNombre, tempCantidad, tempPrecio);
+        }
     }
-    printf("\n\t: Ingrese los datos del repuesto : \n");
-    do
-    {
-        printf("\nNombre: "); scanf("%s",inventario.nombre);
-        printf("\nPrecio: "); scanf("%s",inventario.precio);
-        printf("\nCantidad: "); scanf("%s",inventario.cantidad);
 
-        fprintf(archivo,"\n\nNombre : ");
-        fwrite(inventario.nombre,1,strlen(inventario.nombre),archivo);
+    // Si no se encuentra el repuesto, mostrar un mensaje
+    if (!encontrado) {
+        printf("No se encontro el repuesto con ese nombre.\n");
+    }
 
-        fprintf(archivo,"\nPrecio : ");
-        fwrite(inventario.precio,1,strlen(inventario.precio),archivo);
-        
-        fprintf(archivo,"\nCantidad : ");
-        fwrite(inventario.cantidad,1,strlen(inventario.cantidad),archivo);
-        fflush(stdin);
-
-        printf("Desea agregar mas repuestos (s) : ");
-        scanf("%c",&rpt);
-    }while(rpt == 's');
-    fclose(archivo);   
+    // Cierre de archivos
+    fclose(archivo);
+    fclose(temporal);
+    // Eliminación del archivo original
+    remove("inventario_repuestos.txt");
+    // Renombrar el archivo temporal al original
+    rename("temporal.txt", "inventario_repuestos.txt");
+    // Reabrir el archivo principal en modo texto (lectura y escritura)
+    archivo = fopen("inventario_repuestos.txt", "a+");
 }
 
-void visualizar()
-{
-    char direccion [] = "D:\\inventario_repuestos.txt";
-    int c;
-    archivo = fopen(direccion, "r");   
-    if (archivo == NULL)
-    {
-        printf("Error al tratar de crear el archivo");
-        return 1;
-    }
-    while ((c=fgetc(archivo))!=EOF)
-    {
-        if(c =='\n')
-        {
-            printf("\n");
+void eliminarRepuesto(FILE *archivo) {
+    char nombre[50];
+
+    // Eliminación de un repuesto
+    printf("Ingrese el nombre del repuesto a eliminar: ");
+    scanf("%s", nombre);
+
+    FILE *temporal;
+    char tempNombre[50];
+    int tempCantidad;
+    float tempPrecio;
+    int encontrado = 0;
+
+    // Creación de un archivo temporal para almacenar datos sin el repuesto eliminado
+    temporal = fopen("temporal.txt", "w");
+
+    // Volver al principio del archivo principal
+    rewind(archivo);
+
+    // Copiar los datos al archivo temporal, excluyendo el repuesto a eliminar
+    while (fscanf(archivo, "%s %d %f", tempNombre, &tempCantidad, &tempPrecio) == 3) {
+        if (strcmp(tempNombre, nombre) == 0) {
+            printf("Repuesto eliminado con exito.\n");
+            encontrado = 1;
+        } else {
+            fprintf(temporal, "%s %d %.2f\n", tempNombre, tempCantidad, tempPrecio);
         }
-        else
-        {
-            putchar(c);
-        }
     }
-    
-    fclose(archivo);   
+
+    // Si no se encuentra el repuesto, mostrar un mensaje
+    if (!encontrado) {
+        printf("No se encontro el repuesto con ese nombre.\n");
+    }
+
+    // Cierre de archivos
+    fclose(archivo);
+    fclose(temporal);
+    // Eliminación del archivo original
+    remove("inventario_repuestos.txt");
+    // Renombrar el archivo temporal al original
+    rename("temporal.txt", "inventario_repuestos.txt");
+
+    // Reabrir el archivo principal en modo texto (lectura y escritura)
+    archivo = fopen("inventario_repuestos.txt", "a+");
+}
+
+void listarRepuestos(FILE *archivo) {
+    char tempNombre[50];
+    int tempCantidad;
+    float tempPrecio;
+
+    // Lectura y visualización de todos los repuestos en el archivo
+    rewind(archivo); // Volver al principio del archivo
+
+    printf("\n=== Lista de Repuestos ===\n");
+
+    // Mientras haya datos, mostrar la información de cada repuesto
+    while (fscanf(archivo, "%s %d %f", tempNombre, &tempCantidad, &tempPrecio) == 3) {
+        printf("Nombre: %s\nCantidad: %d\nPrecio: %.2f\n\n", tempNombre, tempCantidad, tempPrecio);
+    }
 }
 #endif 
